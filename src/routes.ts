@@ -3,6 +3,7 @@ import { Readable } from 'stream';
 import readline from 'readline';
 
 import multer from 'multer';
+import { client } from './database/client';
 
 const multerConfig = multer();
 
@@ -32,7 +33,7 @@ router.post(
 
     const products: Product[] = [];
 
-    for await(let line of productLine) {
+    for await (let line of productLine) {
       const productLineSplit = line.split(',');
       products.push({
         code_bar: productLineSplit[0],
@@ -41,7 +42,18 @@ router.post(
         quantity: parseInt(productLineSplit[3]),
       });
     }
-    
+
+    for await (let product of products) {
+      const { code_bar, description, price, quantity } = product;
+      await client.product.create({
+        data: {
+          code_bar,
+          description,
+          price,
+          quantity
+        }
+      });
+    }
 
     return response.send(products);
   });
